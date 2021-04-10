@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller
 {
@@ -33,10 +34,19 @@ class UsuarioController extends Controller
             'usuario'=>'required|unique:usuarios,usuario',
             'email'=>'required|unique:usuarios,email'
         ]);
-        $us = Usuario::create($request->all());
-        return response()->json([
-            'usuario'=>$us
-        ],200);
+        try {
+            DB::beginTransaction();
+            $us = Usuario::create($request->all());
+            DB::commit();
+            return response()->json([
+                'usuario'=>$us
+            ],200);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json([
+                'error'=>"No se pudo guardar el registro ".$th->getMessage()
+            ],500);
+        }
     }
 
     /**
@@ -45,9 +55,9 @@ class UsuarioController extends Controller
      * @param  \App\Models\Usuario  $usuario
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Usuario $usuario)
     {
-        $usuario = Usuario::find($id);
+        // $usuario = Usuario::find($id);
         return response()->json($usuario,200);
     }
 
@@ -60,7 +70,29 @@ class UsuarioController extends Controller
      */
     public function update(Request $request, Usuario $usuario)
     {
-        //
+        $validateData = $request->validate([
+            'nombre'=>'required',
+            'apellido'=>'required',
+            'usuario'=>'required|unique:usuarios,usuario,'.$usuario->id,
+            'email'=>'required|unique:usuarios,email,'.$usuario->id
+        ]);
+        try {
+            DB::beginTransaction();
+            $usuario->nombre = $request->nombre;
+            $usuario->apellido = $request->apellido;
+            $usuario->usuario = $request->usuario;
+            $usuario->email = $request->email;
+            $usuario->save();
+            DB::commit();
+            return response()->json([
+                'usuario'=>$usuario
+            ],200);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return response()->json([
+                'error'=>'No se pudo guardar el registro '.$th->getMessage()
+            ],500);
+        }
     }
 
     /**
@@ -71,6 +103,14 @@ class UsuarioController extends Controller
      */
     public function destroy(Usuario $usuario)
     {
-        //
+        try {
+            DB::beginTransaction();
+            $usuario->delete();
+            DB::commit();
+            return true;
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return false;
+        }
     }
 }

@@ -18,4 +18,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::resource('users', "Api\UsuarioController")->middleware('api');
+Route::middleware('api')->group(function(){
+    Route::get('users','Api\UsuarioController@index');
+
+    Route::post('users','Api\UsuarioController@store');
+
+    Route::put('users/{usuario}','Api\UsuarioController@update');
+
+    Route::get('users/{usuario}','Api\UsuarioController@show');
+
+    Route::delete('users/{usuario}','Api\UsuarioController@destroy');
+});

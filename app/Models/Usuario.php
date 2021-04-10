@@ -9,6 +9,12 @@ class Usuario extends Model
 {
     use HasFactory;
     protected $primary = "id";
+    protected $fillable = [
+        'apellido',
+        'nombre',
+        'email',
+        'usuario'
+    ];
 
     public $timestamps = false;
 }
